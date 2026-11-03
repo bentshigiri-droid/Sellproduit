@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SellScore – Ton produit va-t-il se vendre ?</title>
+<style>
+:root{--bg:#0b0b1a;--card:#15152b;--ink:#f3f3ff;--mute:#9a9ac0;--a:#7c5cff;--b:#00e5c3;--bad:#ff5c7a;--ok:#ffb84d;--line:#26264a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f5f4ff;--card:#fff;--ink:#16162e;--mute:#6b6b8f;--line:#e2e0f5}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+.glow{position:fixed;inset:-20%;z-index:0;pointer-events:none;background:radial-gradient(circle at 20% 20%,#7c5cff55,transparent 40%),radial-gradient(circle at 80% 70%,#00e5c344,transparent 40%);animation:drift 12s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(4%,3%) scale(1.1)}}
+main{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:24px 16px 48px}
+.logo{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:20px}
+.logo span{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill{font-size:12px;padding:6px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--mute)}
+.pill b{color:var(--b)}
+h1{font-size:30px;line-height:1.15;margin:28px 0 8px;animation:up .7s both}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mute);margin:0 0 22px;animation:up .7s .1s both}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;animation:up .7s .2s both}
+label{font-size:13px;color:var(--mute);display:block;margin:0 0 6px}
+input,select{width:100%;font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:13px;outline:none;transition:border .2s,box-shadow .2s}
+input:focus,select:focus{border-color:var(--a);box-shadow:0 0 0 3px #7c5cff33}
+select option{color:#111}
+.row{margin-bottom:14px}
+button.cta{width:100%;font:inherit;font-weight:700;color:#fff;border:0;border-radius:14px;padding:15px;cursor:pointer;background:linear-gradient(90deg,var(--a),#a45cff,var(--b));background-size:200% 100%;animation:shine 4s linear infinite;transition:transform .15s}
+button.cta:active{transform:scale(.97)}
+button.cta:disabled{opacity:.6}
+@keyframes shine{to{background-position:200% 0}}
+#loader{display:none;text-align:center;padding:30px 0}
+.dots span{display:inline-block;width:10px;height:10px;margin:0 4px;border-radius:50%;background:var(--b);animation:bounce 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s;background:var(--a)}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{50%{transform:translateY(-12px)}}
+#loadtxt{color:var(--mute);margin-top:10px;font-size:14px}
+#result{display:none;margin-top:16px}
+.gauge{position:relative;width:200px;height:200px;margin:6px auto 4px}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .num b{font-size:48px}.gauge .num small{color:var(--mute)}
+.verdict{text-align:center;font-weight:700;font-size:18px;margin-bottom:14px}
+.bar{margin:12px 0}
+.bar div.t{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.bar .tr{height:8px;background:var(--line);border-radius:9px;overflow:hidden}
+.bar .fl{height:100%;width:0;border-radius:9px;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.tips{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:#7c5cff1a;font-size:14px;line-height:1.5}
+.tips ul{margin:6px 0 0;padding-left:18px}
+.price{text-align:center;color:var(--mute);font-size:13px;margin-top:12px}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:5;padding:16px}
+.modal.on{display:flex}
+.sheet{background:var(--card);border:1px solid var(--line);width:100%;max-width:460px;border-radius:22px;padding:22px;animation:up .35s both;text-align:center}
+.sheet h2{margin:0 0 6px}
+.big{font-size:38px;font-weight:800;margin:10px 0;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sheet p{color:var(--mute);font-size:14px;margin:0 0 14px}
+.link{background:none;border:0;color:var(--mute);margin-top:10px;font:inherit;cursor:pointer}
+.confetti{position:fixed;top:-10px;width:8px;height:12px;z-index:9;animation:fall 1.8s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<main>
+  <div class="logo"><span>SellScore</span><div class="pill" id="credits"></div></div>
+  <h1>Ton produit digital va-t-il <em>se vendre</em> ?</h1>
+  <p class="sub">Entre ton titre, découvre ton % de potentiel de vente face à la concurrence.</p>
+
+  <div class="card">
+    <div class="row"><label for="title">Titre de ton produit</label>
+      <input id="title" maxlength="120" placeholder="Ex : Budget Dashboard Google Sheets pour freelances" autocomplete="off"></div>
+    <div class="row"><label for="fmt">Format</label>
+      <select id="fmt"><option value="sheet">Modèle Google Sheets / Excel</option><option value="pdf">Guide / E-book PDF</option><option value="tpl">Template (Notion, Canva…)</option><option value="course">Mini-formation</option><option value="other">Autre</option></select></div>
+    <button class="cta" id="go">Analyser mon titre</button>
+    <div class="price">2 analyses gratuites · ensuite 500 FCFA (≈ 1 $) pour 5 analyses</div>
+  </div>
+
+  <div id="loader"><div class="dots"><span></span><span></span><span></span></div><div id="loadtxt"></div></div>
+
+  <div id="result" class="card">
+    <div class="gauge">
+      <svg width="200" height="200" viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#00e5c3"/></linearGradient></defs>
+        <circle cx="100" cy="100" r="84" fill="none" stroke="var(--line)" stroke-width="14"/>
+        <circle id="arc" cx="100" cy="100" r="84" fill="none" stroke="url(#g)" stroke-width="14" stroke-linecap="round" stroke-dasharray="528" stroke-dashoffset="528" style="transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)"/></svg>
+      <div class="num"><b id="pct">0%</b><small>potentiel de vente</small></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div id="bars"></div>
+    <div class="tips" id="tips"></div>
+  </div>
+</main>
+
+<div class="modal" id="modal"><div class="sheet">
+  <h2>Tes 2 analyses gratuites sont utilisées</h2>
+  <p>Continue à tester tes idées de produits.</p>
+  <div class="big">500 FCFA</div>
+  <p>≈ 1 $ · 5 analyses supplémentaires</p>
+  <button class="cta" id="pay">Payer 500 FCFA pour 5 analyses</button>
+  <p style="margin:14px 0 6px">Tu as déjà payé ? Entre ton code :</p><input id="code" placeholder="Code d’activation" style="text-align:center;margin-bottom:8px"><button class="cta" id="redeem" style="background:var(--line);animation:none">Valider le code</button><button class="link" id="close">Plus tard</button>
+</div></div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+var msgs = ["Lecture du titre…","Estimation de la demande…","Comparaison avec la concurrence…","Calcul du score…"];
+function renderCredits(c){
+  $("credits").innerHTML = c.free > 0 ? "<b>" + c.free + "</b> gratuite" + (c.free>1?"s":"") : (c.paid > 0 ? "<b>" + c.paid + "</b> payée" + (c.paid>1?"s":"") : "500 FCFA / 5 analyses");
+}
+fetch("/api/credits").then(function(r){ return r.json(); }).then(renderCredits).catch(function(){});
+function color(v){ return v>=65 ? "var(--b)" : v>=40 ? "var(--ok)" : "var(--bad)"; }
+function verdict(v){ return v>=75 ? "🔥 Très fort potentiel" : v>=55 ? "👍 Bon potentiel" : v>=35 ? "⚠️ Potentiel moyen — à améliorer" : "❌ Titre risqué"; }
+function stopLoad(iv){ clearInterval(iv); $("loader").style.display = "none"; $("go").disabled = false; }
+function run(){
+  var title = $("title").value.trim();
+  if (title.length < 3){ $("title").focus(); $("title").style.borderColor = "var(--bad)"; return; }
+  $("title").style.borderColor = "";
+  $("go").disabled = true; $("result").style.display = "none"; $("loader").style.display = "block";
+  var i = 0; $("loadtxt").textContent = msgs[0];
+  var iv = setInterval(function(){ i = (i+1) % msgs.length; $("loadtxt").textContent = msgs[i]; }, 600);
+  var wait = new Promise(function(r){ setTimeout(r, 2400); });
+  var call = fetch("/api/analyse", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({title:title, fmt:$("fmt").value})})
+    .then(function(r){ return r.json().then(function(d){ return {status:r.status, data:d}; }); });
+  Promise.all([call, wait]).then(function(x){
+    stopLoad(iv);
+    var res = x[0];
+    if (res.data.credits) renderCredits(res.data.credits);
+    if (res.status === 402){ $("modal").classList.add("on"); return; }
+    if (res.status !== 200){ alert(res.data.error || "Erreur"); return; }
+    show(res.data);
+  }).catch(function(){ stopLoad(iv); alert("Erreur réseau, réessaie."); });
+}
+function show(r){
+  $("result").style.display = "block";
+  $("result").scrollIntoView({behavior:"smooth", block:"start"});
+  $("verdict").textContent = verdict(r.score);
+  $("bars").innerHTML = r.bars.map(function(b){
+    return "<div class=\"bar\"><div class=\"t\"><span>" + b[0] + "</span><span>" + b[1] + "%</span></div><div class=\"tr\"><div class=\"fl\" data-w=\"" + b[1] + "\" style=\"background:" + color(b[1]) + "\"></div></div></div>";
+  }).join("");
+  $("tips").innerHTML = "<b>Pour l’améliorer</b><ul>" + r.tips.map(function(t){ return "<li>" + t + "</li>"; }).join("") + "</ul>";
+  $("arc").style.strokeDashoffset = 528; $("pct").textContent = "0%";
+  setTimeout(function(){
+    $("arc").style.strokeDashoffset = 528 - 528*r.score/100;
+    document.querySelectorAll(".fl").forEach(function(el){ el.style.width = el.getAttribute("data-w") + "%"; });
+    var n = 0, step = setInterval(function(){ n += Math.max(1, Math.round(r.score/40)); if (n >= r.score){ n = r.score; clearInterval(step); if (r.score >= 70) confetti(); } $("pct").textContent = n + "%"; }, 35);
+  }, 80);
+}
+function confetti(){
+  var cols = ["#7c5cff","#00e5c3","#ffb84d","#ff5c7a"];
+  for (var i=0;i<40;i++){ var c = document.createElement("i"); c.className = "confetti"; c.style.left = Math.random()*100 + "vw"; c.style.background = cols[i%4]; c.style.animationDelay = Math.random()*0.5 + "s"; document.body.appendChild(c); setTimeout((function(el){ return function(){ el.remove(); }; })(c), 2600); }
+}
+function redeem(){
+  var code = $("code").value.trim(); if (!code) return;
+  fetch("/api/redeem", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({code:code})})
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+    .then(function(x){
+      if (x.d.credits) renderCredits(x.d.credits);
+      if (x.ok){ $("modal").classList.remove("on"); $("code").value = ""; run(); } else { alert(x.d.error || "Code invalide"); }
+    });
+}
+$("go").addEventListener("click", run);
+$("title").addEventListener("keydown", function(e){ if (e.key === "Enter") run(); });
+$("pay").addEventListener("click", function(){ window.open("/pay", "_blank", "noopener"); });
+$("redeem").addEventListener("click", redeem);
+$("close").addEventListener("click", function(){ $("modal").classList.remove("on"); });
+</script>
+</body>
+</html>
