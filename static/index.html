@@ -172,8 +172,8 @@ $("title").addEventListener("keydown", function(e){ if (e.key === "Enter") run()
 $("pay").addEventListener("click", function(){
   $("pay").disabled = true; $("pay").textContent = "Redirection…";
   fetch("/api/checkout", {method:"POST"}).then(function(r){ return r.json(); }).then(function(d){
-    if (d.checkout_url){ location.href = d.checkout_url; } else { throw new Error(d.error); }
-  }).catch(function(){ $("pay").disabled = false; $("pay").textContent = "Payer 500 FCFA pour 5 analyses"; alert("Paiement indisponible, réessaie."); });
+    if (d.checkout_url){ location.href = d.checkout_url; } else { throw new Error(d.error || "réponse vide"); }
+  }).catch(function(e){ $("pay").disabled = false; $("pay").textContent = "Payer 500 FCFA pour 5 analyses"; alert("Paiement indisponible : " + e.message); });
 });
 $("close").addEventListener("click", function(){ $("modal").classList.remove("on"); });
 </script>
