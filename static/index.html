@@ -109,7 +109,7 @@ button.cta:disabled{opacity:.6}
   <p>Prêt à continuer ? Débloque 5 analyses de plus.</p>
   <div class="big">500 FCFA</div>
   <p>≈ 1 $ · 5 analyses supplémentaires<br>Mobile Money ou carte bancaire</p>
-  <button class="cta" id="pay">Payer 500 FCFA pour 5 analyses</button>
+  <input id="cname" placeholder="Ton nom" autocomplete="name" style="margin-bottom:8px;text-align:center"><input id="cmail" type="email" placeholder="Ton email" autocomplete="email" style="margin-bottom:12px;text-align:center"><button class="cta" id="pay">Payer 500 FCFA pour 5 analyses</button>
   <button class="link" id="close">Plus tard</button>
 </div></div>
 
@@ -170,8 +170,10 @@ function confetti(){
 $("go").addEventListener("click", run);
 $("title").addEventListener("keydown", function(e){ if (e.key === "Enter") run(); });
 $("pay").addEventListener("click", function(){
+  var nm = $("cname").value.trim(), em = $("cmail").value.trim();
+  if (nm.length < 2 || em.indexOf("@") < 1){ alert("Entre ton nom et ton email pour le paiement."); return; }
   $("pay").disabled = true; $("pay").textContent = "Redirection…";
-  fetch("/api/checkout", {method:"POST"}).then(function(r){ return r.json(); }).then(function(d){
+  fetch("/api/checkout", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:nm, email:em})}).then(function(r){ return r.json(); }).then(function(d){
     if (d.checkout_url){ location.href = d.checkout_url; } else { throw new Error(d.error || "réponse vide"); }
   }).catch(function(e){ $("pay").disabled = false; $("pay").textContent = "Payer 500 FCFA pour 5 analyses"; alert("Paiement indisponible : " + e.message); });
 });
