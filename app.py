@@ -104,8 +104,21 @@ def api_analyse():
 def saspay(method, path, **kw):
     r = requests.request(method, SASPAY_API + path, timeout=20,
                          headers={"Authorization": "Bearer " + SASPAY_API_KEY}, **kw)
-    body = r.json()
+    try:
+        body = r.json()
+    except ValueError:
+        body = {}
     return r.status_code, (body.get("data", body) if isinstance(body, dict) else {})
+
+
+def error_text(d):
+    """Extrait le message d'erreur renvoyé par SasPay (sans jamais afficher la clé)."""
+    e = d.get("error") if isinstance(d, dict) else None
+    while isinstance(e, dict) and "error" in e:
+        e = e["error"]
+    if isinstance(e, dict):
+        e = e.get("message") or e.get("detail") or e.get("code")
+    return str(e or (d.get("message") or d.get("detail") if isinstance(d, dict) else "") or "pas de détail")[:200]
 
 
 def already_credited(cid):
@@ -120,17 +133,17 @@ def already_credited(cid):
 def api_checkout():
     """Crée une page de paiement SasPay et renvoie son adresse."""
     if not SASPAY_API_KEY:
-        return jsonify({"error": "Paiement non configuré"}), 500
+        return jsonify({"error": "la variable SASPAY_API_KEY est absente sur Render"}), 500
     try:
         status, d = saspay("POST", "/checkout-sessions/", json={
             "amount": PRICE, "currency": CURRENCY,
             "description": "SellScore : %d analyses" % PACK_SIZE,
             "return_url": SITE_URL + "/paid",
         })
-    except requests.RequestException:
-        return jsonify({"error": "SasPay injoignable"}), 502
+    except requests.RequestException as e:
+        return jsonify({"error": "SasPay injoignable (%s)" % type(e).__name__}), 502
     if status not in (200, 201) or not d.get("checkout_url"):
-        return jsonify({"error": "Impossible de créer le paiement"}), 502
+        return jsonify({"error": "SasPay a répondu %s : %s" % (status, error_text(d))}), 502
     session["checkout_id"] = d["id"]
     return jsonify({"checkout_url": d["checkout_url"]})
 
