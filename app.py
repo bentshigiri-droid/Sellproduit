@@ -138,11 +138,17 @@ def already_credited(cid):
 @app.post("/api/checkout")
 def api_checkout():
     """Crée une page de paiement SasPay et renvoie son adresse."""
+    body = request.get_json(silent=True) or {}
+    name = str(body.get("name", "")).strip()[:80]
+    email = str(body.get("email", "")).strip()[:120]
+    if len(name) < 2 or "@" not in email:
+        return jsonify({"error": "nom et email requis"}), 400
     if not SASPAY_API_KEY:
         return jsonify({"error": "la variable SASPAY_API_KEY est absente sur Render"}), 500
     try:
         payload = {"amount": PRICE, "currency": CURRENCY,
-                   "description": "SellScore : %d analyses" % PACK_SIZE}
+                   "description": "SellScore : %d analyses" % PACK_SIZE,
+                   "customer_name": name, "customer_email": email}
         if SITE_URL.startswith("https://"):  # adresse de retour valide seulement en https
             payload["return_url"] = SITE_URL + "/paid"
         status, d = saspay("POST", "/checkout-sessions/", json=payload)
